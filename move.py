@@ -52,6 +52,20 @@ class Example(QWidget):
             # self.yy += diff_y
             self.label.move(self.xx + diff_x, self.yy + diff_y)
 
+    def wheelEvent(self, event):
+        # Print the number of degrees the mouse wheel was rotated
+        angle = event.angleDelta().y() / 8
+        print('Wheel event:', event.angleDelta().y() / 8)
+        if (angle > 0):
+            self.scale += 0.5
+        else:
+            if self.scale > 1:
+                self.scale -= 0.5
+            else:
+                self.scale *= 0.01
+        
+        self.label.resize(240*self.scale,180*self.scale)
+    
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = Example()
