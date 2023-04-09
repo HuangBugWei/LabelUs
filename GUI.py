@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QDialog, QGraphicsWidget
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QCursor, QMouseEvent
 
 class MyClass(QWidget):
     def __init__(self):
@@ -27,6 +27,14 @@ class MyClass(QWidget):
         btn3.clicked.connect(self.left)
         self.show()
     
+    def mousePressEvent(self, event):
+        globalPos = QCursor.pos()
+        widgetPos = self.lbl.mapFromGlobal(globalPos)
+        # Global position -> full screen position
+        print('Global position:', globalPos.x(), globalPos.y())
+        # Widget position -> parent widget position
+        print('Widget position:', widgetPos.x(), widgetPos.y())
+
     def scaledown(self):
         self.scale -= 1
         self.lbl.resize(240*self.scale,180*self.scale)
