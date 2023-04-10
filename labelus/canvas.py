@@ -1,16 +1,19 @@
 from PyQt5.QtWidgets import QLabel, QFrame
 from PyQt5.QtGui import QPixmap, QCursor
 from PyQt5.QtCore import Qt
+import cv2
+from utils import *
 
 class Canvas(QLabel):
     def __init__(self, path=None):
         super().__init__()
         self.path = path if path else ""
         self.originalPixmap = QPixmap(self.path)
+        print("width, ", self.originalPixmap.width())
         self.scale = 1
-        self.x, self.y = self.width(), self.height()
         self.xx = 0
         self.yy = 0
+        
         self.initUI()
     
     def initUI(self):
@@ -42,21 +45,43 @@ class Canvas(QLabel):
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         # self.show()
     def update(self):
-        self.label.setPixmap(QPixmap(self.path))
+        self.originalPixmap = QPixmap(self.path) 
+        self.label.setPixmap(self.originalPixmap)
+        self.cv2img = cv2.imread(self.path)
+        self.cv2mask = creatMask(self.cv2img)
+        self.output = np.zeros_like(self.cv2img)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
             # Record the initial mouse position
             self.x, self.y = event.x(), event.y()
+            print("right click", self.x, self.y)
             self.xx, self.yy = self.label.x(), self.label.y()
             print(self.xx, self.yy)
         elif event.button() == Qt.LeftButton:
             globalPos = QCursor.pos()
             widgetPos = self.label.mapFromGlobal(globalPos)
             # Global position -> full screen position
-            print('Global position:', globalPos.x(), globalPos.y())
+            # print('Global position:', globalPos.x(), globalPos.y())
             # Widget position -> parent widget position
-            print('Widget position:', widgetPos.x(), widgetPos.y())
+            # print('Widget position:', widgetPos.x(), widgetPos.y())
+            
+            print("imgae position: ", 
+                  widgetPos.x()*self.originalPixmap.width()/self.label.width(),
+                  widgetPos.y()*self.originalPixmap.height()/self.label.height())
+            floodFillInput = (int(widgetPos.x()*self.originalPixmap.width()/self.label.width()),
+                              int(widgetPos.y()*self.originalPixmap.height()/self.label.height()))
+
+            self.output = floodFill(self.output, self.cv2mask, 
+                               floodFillInput,
+                               (255, 255, 255),
+                               (0, 0, 0),
+                               (0, 0, 0))
+            cv2.imshow('image window', self.output)
+            # add wait key. window waits until user presses a key
+            cv2.waitKey(0)
+            # and finally destroy/close all open windows
+            cv2.destroyAllWindows()
 
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.RightButton:
