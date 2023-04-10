@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QLabel, QFrame
-from PyQt5.QtGui import QPixmap, QCursor
+from PyQt5.QtGui import QPixmap, QCursor, QColor, QPainter, QImage
 from PyQt5.QtCore import Qt
 import cv2
 from utils import *
@@ -20,18 +20,6 @@ class Canvas(QLabel):
         self.autoFillBackground()
         self.setFrameShape(QFrame.StyledPanel)
         
-        # self.originalPixmap = QPixmap("./sample2-label1.png")
-        
-        # painter
-        '''
-        maskedPixmap = QPixmap(self.originalPixmap.size())
-        maskedPixmap.fill(QColor("transparent"))
-        # Draw a black ellipse on the masked pixmap
-        painter = QPainter(self.originalPixmap)
-        painter.setBrush(QColor('blue'))
-        painter.drawEllipse(200, 200, 300, 200)
-        painter.end()
-        '''
         # Create a new QLabel and set the masked pixmap as its pixmap
         self.label = QLabel(self)
         
@@ -51,10 +39,44 @@ class Canvas(QLabel):
         self.cv2img = cv2.imread(self.path)
         self.cv2mask = creatMask(self.cv2img)
         self.output = np.zeros_like(self.cv2img)
+    
     def storeLabel(self):
         storeImage(self.output)
         self.output = np.zeros_like(self.output)
+
+    def paint(self):
+        print("paint")
+        arr = decodeRLE(storeRLE(dilate(self.output))) > 0
+        print(arr)
+        print(arr.shape)
+        new_arr = np.zeros(arr.shape + (4,), dtype=np.uint8)
+        # new_arr[arr] = np.array(QColor('red').getRgb()[:3] + (255,))
+        new_arr[arr] = np.array((0, 255, 255, 200)) # bgra
+
+        # Create a QPixmap from the new array
+        pixmap = QPixmap.fromImage(QImage(new_arr.data, 
+                                          new_arr.shape[1], 
+                                          new_arr.shape[0], 
+                                          QImage.Format_ARGB32))
+        # maskedPixmap = QPixmap(self.originalPixmap.size())
+        # maskedPixmap.fill(QColor("transparent"))
+        # # Draw a black ellipse on the masked pixmap
+        # painter = QPainter(maskedPixmap)
+        # painter.setBrush(QColor('blue'))
+        # painter.drawEllipse(200, 200, 300, 200)
+        # painter.end()
+
+        painter = QPainter(self.originalPixmap)
+        painter.drawPixmap(0,0, pixmap)
+        painter.end()
+        self.label.setPixmap(self.originalPixmap)
+        print("paint end")
         
+        # painter = QPainter(self.label.pixmap()) # Create a painter to draw on the label's pixmap
+        # painter.setPen(QColor('red')) # Set the pen color to red
+        # painter.drawLine(0, 0, self.label.width(), self.label.height()) # Draw a line from top-left to bottom-right of the label
+        # self.label.update() # Update the label to show the newly drawn line
+
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
             # Record the initial mouse position
@@ -62,6 +84,7 @@ class Canvas(QLabel):
             print("right click", self.x, self.y)
             self.xx, self.yy = self.label.x(), self.label.y()
             print(self.xx, self.yy)
+            self.paint()
         elif event.button() == Qt.LeftButton:
             globalPos = QCursor.pos()
             widgetPos = self.label.mapFromGlobal(globalPos)

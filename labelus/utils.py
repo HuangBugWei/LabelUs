@@ -33,7 +33,7 @@ def creatMask(image: np.array) -> np.array:
     mmask = np.pad(mask, 1, pad_with, padder=0, dtype=np.uint8)
     return mmask
 
-def dilate(input: np.array, width: int = 2) -> np.array:
+def dilate(input: np.array, width: int = 1) -> np.array:
     """
     this function will expand white(255) on image with specified width
     """
@@ -54,6 +54,8 @@ def storeRLE(input: np.array) -> dict:
         return rle_encoding_mask[0]
     else:
         return rle_encoding_mask
+def decodeRLE(input):
+    return pycocotools.mask.decode(input)
 
 def storeImage(input: np.array):
     Image.fromarray(input).save("store.png")
