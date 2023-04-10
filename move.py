@@ -9,6 +9,7 @@ class myImage(QLabel):
         self.path = path if path else ""
         self.originalPixmap = QPixmap(self.path)
         self.scale = 1
+        self.x, self.y = self.width(), self.height()
         self.xx = 0
         self.yy = 0
         self.initUI()
@@ -78,10 +79,20 @@ class myImage(QLabel):
                 self.scale -= 0.5
             else:
                 self.scale *= 0.01
-        
+        ogw = self.label.width()
+        ogh = self.label.height()
+        globalPos = QCursor.pos()
+        widgetPos = self.label.mapFromGlobal(globalPos)
+        cursorx, cursory = widgetPos.x(), widgetPos.y()
         self.label.resize(240*self.scale,180*self.scale)
-        self.yy = self.height() / 2 - self.label.height() / 2
-        self.xx = self.width() / 2 - self.label.width() / 2
+        neww = self.label.width()
+        newh = self.label.height()
+        
+        
+        self.xx -= cursorx * (neww /ogw - 1)
+        self.yy -= cursory * (newh / ogh - 1)
+        # self.yy = self.height() / 2 - self.label.height() / 2
+        # self.xx = self.width() / 2 - self.label.width() / 2
         self.label.move(self.xx, self.yy)
         print(self.width())
         print(self.label.width())
