@@ -4,12 +4,17 @@ from PyQt5.QtGui import QPixmap, QPainter, QColor, QCursor
 from PyQt5.QtCore import Qt
 
 class myImage(QLabel):
-    def __init__(self):
+    def __init__(self, path=None):
         super().__init__()
+        self.path = path if path else ""
         self.initUI()
     
     def initUI(self):
-        self.originalPixmap = QPixmap("./sample2-label1.png")
+        self.originalPixmap = QPixmap(self.path)
+        # self.originalPixmap = QPixmap("./sample2-label1.png")
+        
+        # painter
+        '''
         maskedPixmap = QPixmap(self.originalPixmap.size())
         maskedPixmap.fill(QColor("transparent"))
         # Draw a black ellipse on the masked pixmap
@@ -17,6 +22,8 @@ class myImage(QLabel):
         painter.setBrush(QColor('blue'))
         painter.drawEllipse(200, 200, 300, 200)
         painter.end()
+        '''
+
         self.xx = 0
         self.yy = 0
         # Create a new QLabel and set the masked pixmap as its pixmap
@@ -26,11 +33,14 @@ class myImage(QLabel):
         # self.label.move(self.xx, self.yy)
         # self.label.resize(maskedPixmap.width(), maskedPixmap.height())
         self.scale = 2
-        self.label.resize(240*self.scale,180*self.scale)
+        self.label.resize(240*self.scale, 180*self.scale)
         self.label.setScaledContents(True)
 
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.show()
+        # self.show()
+    def update(self):
+        self.label.setPixmap(QPixmap(self.path))
+
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
             # Record the initial mouse position
