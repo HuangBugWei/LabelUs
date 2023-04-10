@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHB
 from PyQt5.QtCore import Qt
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog
+from PyQt5.QtGui import QResizeEvent
 
 from move import myImage
 
@@ -53,6 +54,7 @@ class Example(QWidget):
         tools = Tools()
         tools.button1.clicked.connect(self.openFileDialog)
         self.img = myImage("")
+
         # Create a QHBoxLayout and add the button layout and label
         mainLayout = QHBoxLayout()
         mainLayout.addLayout(tools)
@@ -62,12 +64,21 @@ class Example(QWidget):
         # Set the main layout of the window
         self.setLayout(mainLayout)
 
-        self.setGeometry(300, 300, 800, 850)
-        self.setMinimumSize(800, 800)
+        self.setGeometry(100, 100, 1080, 720)
+        self.setMinimumSize(1080, 720)
         self.setWindowTitle('Labelus')
         self.setContentsMargins(0,0,0,0)
         self.show()
-    
+
+    def resizeEvent(self, event):
+        print('Current size:', self.size().width(), 'x', self.size().height())
+        self.img.yy = self.img.height() / 2 - self.img.label.height() / 2
+        self.img.xx = self.img.width() / 2 - self.img.label.width() / 2
+        self.img.update()
+        print('canvas size:', self.img.width(), 'x', self.img.height())
+        print('canvas size:', self.img.label.width(), 'x', self.img.label.height())
+        super().resizeEvent(event)
+
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -75,6 +86,8 @@ class Example(QWidget):
         if fileName:
             print(fileName)
             self.img.path = fileName
+            print('oepn canvas size:', self.img.width(), 'x', self.img.height())
+            
             self.img.update()
             # pixmap = QPixmap(fileName)
             # self.label.setPixmap(pixmap)

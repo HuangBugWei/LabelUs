@@ -40,6 +40,7 @@ class myImage(QLabel):
         # self.show()
     def update(self):
         self.label.setPixmap(QPixmap(self.path))
+        self.label.move(self.xx, self.yy)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
@@ -77,6 +78,10 @@ class myImage(QLabel):
                 self.scale *= 0.01
         
         self.label.resize(240*self.scale,180*self.scale)
+        self.yy = self.height() / 2 - self.label.height() / 2
+        self.xx = self.width() / 2 - self.label.width() / 2
+        self.update()
+        print(self.width())
         print(self.label.width())
         
 
@@ -114,43 +119,6 @@ class Example(QMainWindow):
 
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.show()
-    def mousePressEvent(self, event):
-        if event.button() == Qt.RightButton:
-            # Record the initial mouse position
-            self.x, self.y = event.x(), event.y()
-            self.xx, self.yy = self.label.x(), self.label.y()
-            print(self.xx, self.yy)
-        elif event.button() == Qt.LeftButton:
-            globalPos = QCursor.pos()
-            widgetPos = self.label.mapFromGlobal(globalPos)
-            # Global position -> full screen position
-            print('Global position:', globalPos.x(), globalPos.y())
-            # Widget position -> parent widget position
-            print('Widget position:', widgetPos.x(), widgetPos.y())
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.RightButton:
-            # Calculate the difference between the initial position and the current position
-            diff_x = event.x() - self.x
-            diff_y = event.y() - self.y
-            # self.xx += diff_x
-            # self.yy += diff_y
-            self.label.move(self.xx + diff_x, self.yy + diff_y)
-
-    def wheelEvent(self, event):
-        # Print the number of degrees the mouse wheel was rotated
-        angle = event.angleDelta().y() / 8
-        print('Wheel event:', event.angleDelta().y() / 8)
-        if (angle > 0):
-            self.scale += 0.5
-        else:
-            if self.scale > 1:
-                self.scale -= 0.5
-            else:
-                self.scale *= 0.01
-        
-        self.label.resize(240*self.scale,180*self.scale)
-        print(self.label.width())
     
 if __name__ == '__main__':
     app = QApplication(sys.argv)
