@@ -55,5 +55,8 @@ def storeRLE(input: np.array) -> dict:
     else:
         return rle_encoding_mask
 
+def storeImage(input: np.array):
+    Image.fromarray(input).save("store.png")
+
 if __name__ == '__main__':
     img = cv2.imread("sample2.png")

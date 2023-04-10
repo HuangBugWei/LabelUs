@@ -43,6 +43,7 @@ class Canvas(QLabel):
         self.label.setScaledContents(True)
 
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
         # self.show()
     def update(self):
         self.originalPixmap = QPixmap(self.path) 
@@ -50,7 +51,10 @@ class Canvas(QLabel):
         self.cv2img = cv2.imread(self.path)
         self.cv2mask = creatMask(self.cv2img)
         self.output = np.zeros_like(self.cv2img)
-
+    def storeLabel(self):
+        storeImage(self.output)
+        self.output = np.zeros_like(self.output)
+        
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
             # Record the initial mouse position
@@ -66,9 +70,6 @@ class Canvas(QLabel):
             # Widget position -> parent widget position
             # print('Widget position:', widgetPos.x(), widgetPos.y())
             
-            print("imgae position: ", 
-                  widgetPos.x()*self.originalPixmap.width()/self.label.width(),
-                  widgetPos.y()*self.originalPixmap.height()/self.label.height())
             floodFillInput = (int(widgetPos.x()*self.originalPixmap.width()/self.label.width()),
                               int(widgetPos.y()*self.originalPixmap.height()/self.label.height()))
 
@@ -77,11 +78,11 @@ class Canvas(QLabel):
                                (255, 255, 255),
                                (0, 0, 0),
                                (0, 0, 0))
-            cv2.imshow('image window', self.output)
-            # add wait key. window waits until user presses a key
-            cv2.waitKey(0)
-            # and finally destroy/close all open windows
-            cv2.destroyAllWindows()
+            # cv2.imshow('image window', self.output)
+            # # add wait key. window waits until user presses a key
+            # cv2.waitKey(0)
+            # # and finally destroy/close all open windows
+            # cv2.destroyAllWindows()
 
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.RightButton:

@@ -7,7 +7,6 @@ from canvas import Canvas
 from filelist import FileList
 from tools import Tools
 
-
 class MainPage(QWidget):
     def __init__(self):
         super().__init__()
@@ -35,6 +34,7 @@ class MainPage(QWidget):
         self.setGeometry(100, 100, 1620, 880)
         self.setMinimumSize(1080, 720)
         self.setWindowTitle('LabelUs')
+        self.keyPressEvent = self.handleKeyPressEvent
         self.show()
 
     def resizeEvent(self, event):
@@ -70,7 +70,13 @@ class MainPage(QWidget):
                     item = QListWidgetItem(file)
                     item.setWhatsThis(os.path.join(folder, file))
                     self.filelist.addItem(item)
+    
+    def handleKeyPressEvent(self, event):
         
+        if event.key() == Qt.Key_A:  # whitespace key
+            self.canvas.storeLabel()
+        else:
+            super().keyPressEvent(event)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
