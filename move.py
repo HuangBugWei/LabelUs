@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QMainWindow
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QMainWindow, QFrame
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QCursor
 from PyQt5.QtCore import Qt
 
@@ -7,10 +7,16 @@ class myImage(QLabel):
     def __init__(self, path=None):
         super().__init__()
         self.path = path if path else ""
+        self.originalPixmap = QPixmap(self.path)
+        self.scale = 1
+        self.xx = 0
+        self.yy = 0
         self.initUI()
     
     def initUI(self):
-        self.originalPixmap = QPixmap(self.path)
+        self.autoFillBackground()
+        self.setFrameShape(QFrame.StyledPanel)
+        
         # self.originalPixmap = QPixmap("./sample2-label1.png")
         
         # painter
@@ -23,16 +29,13 @@ class myImage(QLabel):
         painter.drawEllipse(200, 200, 300, 200)
         painter.end()
         '''
-
-        self.xx = 0
-        self.yy = 0
         # Create a new QLabel and set the masked pixmap as its pixmap
         self.label = QLabel(self)
         
         self.label.setPixmap(self.originalPixmap)
         # self.label.move(self.xx, self.yy)
         # self.label.resize(maskedPixmap.width(), maskedPixmap.height())
-        self.scale = 2
+
         self.label.resize(240*self.scale, 180*self.scale)
         self.label.setScaledContents(True)
 
@@ -40,7 +43,6 @@ class myImage(QLabel):
         # self.show()
     def update(self):
         self.label.setPixmap(QPixmap(self.path))
-        self.label.move(self.xx, self.yy)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
@@ -80,7 +82,7 @@ class myImage(QLabel):
         self.label.resize(240*self.scale,180*self.scale)
         self.yy = self.height() / 2 - self.label.height() / 2
         self.xx = self.width() / 2 - self.label.width() / 2
-        self.update()
+        self.label.move(self.xx, self.yy)
         print(self.width())
         print(self.label.width())
         
