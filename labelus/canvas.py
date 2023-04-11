@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QLabel, QFrame
-from PyQt5.QtGui import QPixmap, QCursor, QColor, QPainter, QImage
-from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QCursor, QColor, QPainter, QImage, QPolygon
+from PyQt5.QtCore import Qt, QPoint
 import cv2
 from utils import *
 
@@ -46,29 +46,32 @@ class Canvas(QLabel):
 
     def paint(self):
         print("paint")
-        arr = decodeRLE(storeRLE(dilate(self.output))) > 0
-        print(arr)
-        print(arr.shape)
-        new_arr = np.zeros(arr.shape + (4,), dtype=np.uint8)
-        # new_arr[arr] = np.array(QColor('red').getRgb()[:3] + (255,))
-        new_arr[arr] = np.array((0, 255, 255, 200)) # bgra
+        ### draw from bitmask
+        # arr = decodeRLE(storeRLE(dilate(self.output))) > 0
+        # print(arr)
+        # print(arr.shape)
+        # new_arr = np.zeros(arr.shape + (4,), dtype=np.uint8)
+        # # new_arr[arr] = np.array(QColor('red').getRgb()[:3] + (255,))
+        # new_arr[arr] = np.array((0, 255, 255, 200)) # bgra
 
-        # Create a QPixmap from the new array
-        pixmap = QPixmap.fromImage(QImage(new_arr.data, 
-                                          new_arr.shape[1], 
-                                          new_arr.shape[0], 
-                                          QImage.Format_ARGB32))
-        # maskedPixmap = QPixmap(self.originalPixmap.size())
-        # maskedPixmap.fill(QColor("transparent"))
-        # # Draw a black ellipse on the masked pixmap
-        # painter = QPainter(maskedPixmap)
-        # painter.setBrush(QColor('blue'))
-        # painter.drawEllipse(200, 200, 300, 200)
+        # # Create a QPixmap from the new array
+        # pixmap = QPixmap.fromImage(QImage(new_arr.data, 
+        #                                   new_arr.shape[1], 
+        #                                   new_arr.shape[0], 
+        #                                   QImage.Format_ARGB32))
+
+        maskedPixmap = QPixmap(self.originalPixmap.size())
+        maskedPixmap.fill(QColor("transparent"))
+        # Draw a black ellipse on the masked pixmap
+        painter = QPainter(maskedPixmap)
+        painter.setBrush(QColor('blue'))
+        hull = getContours(self.output)
+        painter.drawPolygon(QPolygon([QPoint(*p) for p in hull.reshape(-1, 2)]))
         # painter.end()
 
         painter = QPainter(self.originalPixmap)
-        painter.drawPixmap(0,0, pixmap)
-        painter.end()
+        painter.drawPixmap(0,0, maskedPixmap)
+        # painter.end()
         self.label.setPixmap(self.originalPixmap)
         print("paint end")
         

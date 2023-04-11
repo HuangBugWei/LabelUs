@@ -60,5 +60,36 @@ def decodeRLE(input):
 def storeImage(input: np.array):
     Image.fromarray(input).save("store.png")
 
+def getContours(input: np.array):
+    gray = cv2.cvtColor(input, cv2.COLOR_BGR2GRAY)
+    _, threshold = cv2.threshold(gray, 127, 255, 0)
+    contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # concat shape is (n, 1, 2), n points, 2 stands for x, y
+    concat = np.concatenate([contour for contour in contours], axis = 0)
+    nonsortXY = np.transpose(concat, (2, 0, 1)).reshape(2, -1)
+
+    sortedX, sortedY = sortXY(nonsortXY[0], nonsortXY[1])
+    sortedXY = (np.stack((sortedX, sortedY))).transpose().reshape(-1, 1, 2)
+    hull = cv2.convexHull(sortedXY)
+    return hull
+
+
+def sortXY(x, y):
+    # ref: https://stackoverflow.com/a/58874392
+    # sort xy into counter-clockwise order
+    x0 = np.mean(x)
+    y0 = np.mean(y)
+
+    r = np.sqrt((x-x0)**2 + (y-y0)**2)
+
+    angles = np.where((y-y0) > 0, np.arccos((x-x0)/r), 2*np.pi-np.arccos((x-x0)/r))
+
+    mask = np.argsort(angles)
+
+    x_sorted = x[mask]
+    y_sorted = y[mask]
+
+    return x_sorted, y_sorted
+
 if __name__ == '__main__':
     img = cv2.imread("sample2.png")
