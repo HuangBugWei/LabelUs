@@ -1,12 +1,13 @@
 import sys, os
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QMainWindow, QListWidget, QListWidgetItem
-# from PyQt5.QtGui import QResizeEvent
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
 from canvas import Canvas
 from filelist import FileList
 from tools import Tools
 from graphic import *
+import numpy as np
 
 class MainPage(QWidget):
     def __init__(self):
@@ -66,11 +67,14 @@ class MainPage(QWidget):
                     self.filelist.addItem(item)
     
     def handleKeyPressEvent(self, event):
-        
-        if event.key() == Qt.Key_A:  # whitespace key
+        if event.key() == Qt.Key_A:
             print("key A")
-        else:
-            super().keyPressEvent(event)
+            self.viewer.undo()
+        # elif event.key() == Qt.Key_S:
+        #     pass
+
+        # else:
+        super().keyPressEvent(event)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -5,7 +5,8 @@ import pycocotools.mask
 
 def floodFill(source, mask, seedPoint, newVal, loDiff, upDiff, flags=cv2.FLOODFILL_FIXED_RANGE):
     result = source.copy()
-    cv2.floodFill(result, mask=mask, seedPoint=seedPoint, newVal=newVal, loDiff=loDiff, upDiff=upDiff, flags=flags)
+    mmask = mask.copy()
+    cv2.floodFill(result, mmask, seedPoint=seedPoint, newVal=newVal, loDiff=loDiff, upDiff=upDiff, flags=flags)
     return result
 
 def creatMask(image: np.array) -> np.array:

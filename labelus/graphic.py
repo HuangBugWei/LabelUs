@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QPointF, QEvent
 from utils import *
 import cv2
+import numpy as np
 
 # modified from https://stackoverflow.com/a/35514531
 class PhotoViewer(QtWidgets.QGraphicsView):
@@ -14,8 +15,11 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self._empty = True
         self._scene = QtWidgets.QGraphicsScene(self)
         self._photo = QtWidgets.QGraphicsPixmapItem()
+        self._tempMask = QtWidgets.QGraphicsPixmapItem()
         self._scene.addItem(self._photo)
+        self._scene.addItem(self._tempMask)
         self._labelObjects = []
+        self._tempLabelObjects = []
         
         self.setScene(self._scene)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
@@ -80,6 +84,16 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             else:
                 self._zoom = 0
 
+    def undo(self):
+        if self._tempLabelObjects:
+            self._tempLabelObjects.pop()
+            if self._tempLabelObjects:
+                self._currentMask = self._tempLabelObjects.pop()
+                self.drawTempMask(self._currentMask)
+            else:
+                self._tempMask.setPixmap(QtGui.QPixmap())
+                self._currentMask[self._currentMask > 0] = 0
+
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
             
@@ -90,51 +104,76 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             floodFillInput = (self.mapToScene(event.pos()).toPoint().x(),
                               self.mapToScene(event.pos()).toPoint().y())
 
+            
             self._currentMask = floodFill(self._currentMask, self._cv2mask, 
-                               floodFillInput,
-                               (255, 255, 255),
-                               (0, 0, 0),
-                               (0, 0, 0))
-            self.draw(self.mapToScene(event.pos()).toPoint())
+                                floodFillInput,
+                                (255, 255, 255),
+                                (0, 0, 0),
+                                (0, 0, 0))
+            
+            
+            self.drawTempMask(self._currentMask)
         else:
             self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+            
         super(PhotoViewer, self).mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
         if event.button() == Qt.LeftButton:
             self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
         
+        super(PhotoViewer, self).mouseReleaseEvent(event)
+        
 
-    def draw(self, p):
-        it = QtWidgets.QGraphicsEllipseItem(0, 0, 50, 50)
-        it.setPen(QtGui.QPen(QtCore.Qt.red, 5, QtCore.Qt.SolidLine))
-        self._scene.addItem(it)
-        it.setPos(p)
-        self._labelObjects.append(it)
+    def drawTempMask(self, mask):
+        arr = np.transpose(dilate(mask), (2, 0, 1))[0] > 0
+        new_arr = np.zeros(arr.shape + (4,), dtype=np.uint8)
+        # new_arr[arr] = np.array(QColor('red').getRgb()[:3] + (255,))
+        new_arr[arr] = np.array((0, 255, 255, 200)) # bgra
+
+        # Create a QPixmap from the new array
+        tempMaskPixmap = QtGui.QPixmap.fromImage(QtGui.QImage(new_arr.data, 
+                                          new_arr.shape[1], 
+                                          new_arr.shape[0], 
+                                          QtGui.QImage.Format_ARGB32))
+        
+        self._tempMask.setPixmap(tempMaskPixmap)
+        # it = QtWidgets.QGraphicsEllipseItem(0, 0, 50, 50)
+        # it.setPen(QtGui.QPen(QtCore.Qt.red, 5, QtCore.Qt.SolidLine))
+        # self._scene.addItem(it)
+        # it.setPos(p)
+        self._tempLabelObjects.append(mask)
+    
+    def drawMask(self, mask):
+        pass
+
+    
+    # def haveTempMask(self):
+    #     return len(self._tempLabelObjects) != 0
     
 
-class Window(QtWidgets.QWidget):
-    def __init__(self):
-        super(Window, self).__init__()
-        self.viewer = PhotoViewer(self)
+# class Window(QtWidgets.QWidget):
+#     def __init__(self):
+#         super(Window, self).__init__()
+#         self.viewer = PhotoViewer(self)
         
-        # Arrange layout
-        VBlayout = QtWidgets.QVBoxLayout(self)
-        VBlayout.addWidget(self.viewer)
-        # self.loadImage()
+#         # Arrange layout
+#         VBlayout = QtWidgets.QVBoxLayout(self)
+#         VBlayout.addWidget(self.viewer)
+#         # self.loadImage()
 
-    def loadImage(self, filename: str):
-        self.viewer.setPhoto(QtGui.QPixmap(filename))
+#     def loadImage(self, filename: str):
+#         self.viewer.setPhoto(QtGui.QPixmap(filename))
 
-    def pixInfo(self):
-        self.viewer.toggleDragMode()
+#     def pixInfo(self):
+#         self.viewer.toggleDragMode()
 
 
 
-if __name__ == '__main__':
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    window = Window()
-    window.setGeometry(500, 300, 800, 600)
-    window.show()
-    sys.exit(app.exec_())
+# if __name__ == '__main__':
+#     import sys
+#     app = QtWidgets.QApplication(sys.argv)
+#     window = Window()
+#     window.setGeometry(500, 300, 800, 600)
+#     window.show()
+#     sys.exit(app.exec_())
