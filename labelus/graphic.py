@@ -20,6 +20,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self._scene.addItem(self._tempMask)
         self._labelObjects = []
         self._tempLabelObjects = []
+        self._labelNow = False
         
         self.setScene(self._scene)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
@@ -106,15 +107,10 @@ class PhotoViewer(QtWidgets.QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
-            
-            if self._photo.isUnderMouse():
-                
-                self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
-                print(self.mapToScene(event.pos()).toPoint())
+            self._labelNow = True
             floodFillInput = (self.mapToScene(event.pos()).toPoint().x(),
                               self.mapToScene(event.pos()).toPoint().y())
 
-            
             self._currentMask, isSame = floodFill(self._currentMask, self._cv2mask, 
                                                     floodFillInput,
                                                     (255, 255, 255),
@@ -128,10 +124,30 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             
         super(PhotoViewer, self).mousePressEvent(event)
 
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
+        # if event.button() == Qt.RightButton:
+        if self._labelNow:
+            if self._photo.isUnderMouse():
+                self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
+                
+            floodFillInput = (self.mapToScene(event.pos()).toPoint().x(),
+                              self.mapToScene(event.pos()).toPoint().y())
+
+            self._currentMask, isSame = floodFill(self._currentMask, self._cv2mask, 
+                                                    floodFillInput,
+                                                    (255, 255, 255),
+                                                    (0, 0, 0),
+                                                    (0, 0, 0))
+            
+            if not isSame:
+                self.drawTempMask(self._currentMask)
+        super().mouseMoveEvent(event)
+
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
         if event.button() == Qt.LeftButton:
             self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
-        
+        elif event.button() == Qt.RightButton:
+            self._labelNow = False
         super(PhotoViewer, self).mouseReleaseEvent(event)
         
 
