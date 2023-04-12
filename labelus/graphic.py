@@ -66,6 +66,11 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             it = self._labelObjects.pop()
             self._scene.removeItem(it)
             del it
+        
+        while self._tempLabelObjects:
+            it = self._tempLabelObjects.pop()
+            self._scene.removeItem(it)
+            del it
 
         self.fitInView()
 
@@ -93,6 +98,11 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             else:
                 self._tempMask.setPixmap(QtGui.QPixmap())
                 self._currentMask[self._currentMask > 0] = 0
+        elif self._labelObjects:
+            it = self._labelObjects.pop()
+            self._scene.removeItem(it)
+            del it
+        
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
@@ -105,14 +115,14 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                               self.mapToScene(event.pos()).toPoint().y())
 
             
-            self._currentMask = floodFill(self._currentMask, self._cv2mask, 
-                                floodFillInput,
-                                (255, 255, 255),
-                                (0, 0, 0),
-                                (0, 0, 0))
+            self._currentMask, isSame = floodFill(self._currentMask, self._cv2mask, 
+                                                    floodFillInput,
+                                                    (255, 255, 255),
+                                                    (0, 0, 0),
+                                                    (0, 0, 0))
             
-            
-            self.drawTempMask(self._currentMask)
+            if not isSame:
+                self.drawTempMask(self._currentMask)
         else:
             self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
             
@@ -138,14 +148,20 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                                           QtGui.QImage.Format_ARGB32))
         
         self._tempMask.setPixmap(tempMaskPixmap)
-        # it = QtWidgets.QGraphicsEllipseItem(0, 0, 50, 50)
-        # it.setPen(QtGui.QPen(QtCore.Qt.red, 5, QtCore.Qt.SolidLine))
-        # self._scene.addItem(it)
-        # it.setPos(p)
+        
         self._tempLabelObjects.append(mask)
     
-    def drawMask(self, mask):
-        pass
+    def drawMask(self):
+        if self._tempLabelObjects:
+            hull = getContours(self._currentMask)
+            mask = QtWidgets.QGraphicsPolygonItem(QtGui.QPolygonF([QPoint(*p) for p in hull.reshape(-1, 2)]))
+            mask.setPen(QtGui.QPen(QtGui.QColor(255, 0, 0, 200), 10, QtCore.Qt.SolidLine))
+            mask.setBrush(QtGui.QBrush(QtGui.QColor(255, 0, 0, 100), QtCore.Qt.SolidPattern))
+            self._tempLabelObjects.clear()
+            self._tempMask.setPixmap(QtGui.QPixmap())
+            self._currentMask[self._currentMask > 0] = 0
+            self._scene.addItem(mask)
+            self._labelObjects.append(mask)
 
     
     # def haveTempMask(self):

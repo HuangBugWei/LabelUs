@@ -7,7 +7,8 @@ def floodFill(source, mask, seedPoint, newVal, loDiff, upDiff, flags=cv2.FLOODFI
     result = source.copy()
     mmask = mask.copy()
     cv2.floodFill(result, mmask, seedPoint=seedPoint, newVal=newVal, loDiff=loDiff, upDiff=upDiff, flags=flags)
-    return result
+
+    return result, np.equal(result, source).all()
 
 def creatMask(image: np.array) -> np.array:
     '''

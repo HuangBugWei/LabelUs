@@ -70,8 +70,9 @@ class MainPage(QWidget):
         if event.key() == Qt.Key_A:
             print("key A")
             self.viewer.undo()
-        # elif event.key() == Qt.Key_S:
-        #     pass
+        elif event.key() == Qt.Key_S:
+            print("Key S")
+            self.viewer.drawMask()
 
         # else:
         super().keyPressEvent(event)
