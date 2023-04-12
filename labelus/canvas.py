@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QLabel, QFrame
-from PyQt5.QtGui import QPixmap, QCursor, QColor, QPainter, QImage, QPolygon
+from PyQt5.QtWidgets import QLabel, QFrame, QShortcut
+from PyQt5.QtGui import QPixmap, QCursor, QColor, QPainter, QImage, QPolygon, QKeySequence
 from PyQt5.QtCore import Qt, QPoint
 import cv2
 from utils import *
@@ -31,8 +31,12 @@ class Canvas(QLabel):
         self.label.setScaledContents(True)
 
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
+        shortcut.activated.connect(self.undo)
         
         # self.show()
+    def undo(self):
+        print("wowo")
     def update(self):
         self.originalPixmap = QPixmap(self.path) 
         self.label.setPixmap(self.originalPixmap)

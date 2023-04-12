@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 from canvas import Canvas
 from filelist import FileList
 from tools import Tools
+from graphic import *
 
 class MainPage(QWidget):
     def __init__(self):
@@ -13,6 +14,7 @@ class MainPage(QWidget):
         self.filelist = FileList()
         self.tools = Tools()
         self.canvas = Canvas()
+        self.viewer = PhotoViewer(self)
 
         self.initUI()
 
@@ -23,10 +25,11 @@ class MainPage(QWidget):
         self.tools.button1.clicked.connect(self.openFileDialog)
         self.tools.button2.clicked.connect(self.openFolderDialog)
 
+
         # Create a QHBoxLayout and add the button layout and label
         mainLayout = QHBoxLayout()
         mainLayout.addLayout(self.tools)
-        mainLayout.addWidget(self.canvas)
+        mainLayout.addWidget(self.viewer)
         mainLayout.addWidget(self.filelist)
         
         # Set the main layout of the window
@@ -37,27 +40,18 @@ class MainPage(QWidget):
         self.keyPressEvent = self.handleKeyPressEvent
         self.show()
 
-    def resizeEvent(self, event):
-        self.canvas.yy = self.canvas.height() // 2 - self.canvas.label.height() // 2
-        self.canvas.xx = self.canvas.width() // 2 - self.canvas.label.width() // 2
-        self.canvas.label.move(self.canvas.xx, self.canvas.yy)
-        super().resizeEvent(event)
-
     def openFile(self, item):
         print(item.whatsThis())
-        filename = item.whatsThis()
-        self.canvas.path = filename
-        self.canvas.update()
-
+        fileName = item.whatsThis()
+        self.viewer.setPhoto(fileName)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, "Select Image File", "", "Images (*.png *.xpm *.jpg *.jpeg *.bmp *.gif)", options=options)
         if fileName:
-            
-            self.canvas.path = fileName
-            self.canvas.update()
+            # self.win.loadImage(fileName)
+            self.viewer.setPhoto(fileName)
     
     def openFolderDialog(self):
         options = QFileDialog.Options()
@@ -74,7 +68,7 @@ class MainPage(QWidget):
     def handleKeyPressEvent(self, event):
         
         if event.key() == Qt.Key_A:  # whitespace key
-            self.canvas.storeLabel()
+            print("key A")
         else:
             super().keyPressEvent(event)
 

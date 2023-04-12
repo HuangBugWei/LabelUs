@@ -12,7 +12,7 @@ class Tools(QVBoxLayout):
         button3.setText("asdfasd")
         button4 = QPushButton('Button 4')
         self.button1.setFlat(True)
-        
+        self.button2.setFlat(True)
         # Set the size of the buttons
         self.button1.setFixedSize(80, 80)
         self.button2.setFixedSize(80, 80)
