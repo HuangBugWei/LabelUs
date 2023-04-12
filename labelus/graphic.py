@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QPointF, QEvent
 from utils import *
-import cv2
+import cv2, os, json, base64
 import numpy as np
 
 # modified from https://stackoverflow.com/a/35514531
@@ -21,6 +21,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self._labelObjects = []
         self._tempLabelObjects = []
         self._labelNow = False
+        self._imgPath = None
         
         self.setScene(self._scene)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
@@ -29,6 +30,11 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0, 255, 0)))
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
+        shortcutUndo = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self)
+        shortcutUndo.activated.connect(self.undo)
+
+        shortcutStore = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+S"), self)
+        shortcutStore.activated.connect(self.store)
 
     def hasPhoto(self):
         return not self._empty
@@ -52,6 +58,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         if pixmap:
             self._empty = False
             self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+            self._imgPath = os.path.basename(pixmap)
             self._photo.setPixmap(QtGui.QPixmap(pixmap))
             self._cv2img = cv2.imread(pixmap)
             self._cv2mask = creatMask(self._cv2img)
@@ -101,12 +108,13 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                 self._currentMask[self._currentMask > 0] = 0
         elif self._labelObjects:
             it = self._labelObjects.pop()
-            self._scene.removeItem(it)
+            self._scene.removeItem(it[0])
             del it
         
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
+            print(self._cv2img.shape)
             self._labelNow = True
             floodFillInput = (self.mapToScene(event.pos()).toPoint().x(),
                               self.mapToScene(event.pos()).toPoint().y())
@@ -171,14 +179,38 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         if self._tempLabelObjects:
             hull = getContours(self._currentMask)
             mask = QtWidgets.QGraphicsPolygonItem(QtGui.QPolygonF([QPoint(*p) for p in hull.reshape(-1, 2)]))
-            mask.setPen(QtGui.QPen(QtGui.QColor(255, 0, 0, 200), 10, QtCore.Qt.SolidLine))
+            mask.setPen(QtGui.QPen(QtGui.QColor(255, 0, 0, 200), 5, QtCore.Qt.SolidLine))
             mask.setBrush(QtGui.QBrush(QtGui.QColor(255, 0, 0, 100), QtCore.Qt.SolidPattern))
+            # mask.setSelected(True)
             self._tempLabelObjects.clear()
             self._tempMask.setPixmap(QtGui.QPixmap())
             self._currentMask[self._currentMask > 0] = 0
             self._scene.addItem(mask)
-            self._labelObjects.append(mask)
+            self._labelObjects.append([mask, hull])
 
+    def store(self):
+        print('store')
+        # print(base64.b64decode(self._cv2img).decode('utf-8'))
+        labeljson = dict()
+        labeljson["imageHeight"] = self._cv2img.shape[0]
+        labeljson["imageWidth"] = self._cv2img.shape[1]
+        labeljson["imagePath"] = None
+        labeljson["imageData"] = base64.b64decode(self._cv2img)
+        labeljson["version"] = "5.0.1" # opt
+        labeljson["flags"] = dict() # opt
+        shapes = []
+        
+        for shape in self._labelObjects:
+            anno = dict()
+            anno["label"] = "intersection"
+            anno["points"] = shape[1].reshape(-1,2).tolist()
+            anno["group_id"] = None
+            anno["shape_type"] = "polygon"
+            anno["flags"] = dict()
+            shapes.append(anno)
+        labeljson["shapes"] = shapes
+        with open(os.path.splitext(self._imgPath)[0]+'.json', 'w') as f:
+            json.dump(labeljson, f, indent=2)
     
     # def haveTempMask(self):
     #     return len(self._tempLabelObjects) != 0

@@ -12,9 +12,10 @@ import numpy as np
 class MainPage(QWidget):
     def __init__(self):
         super().__init__()
+        self.labelist = FileList()
         self.filelist = FileList()
         self.tools = Tools()
-        self.canvas = Canvas()
+        # self.canvas = Canvas()
         self.viewer = PhotoViewer(self)
 
         self.initUI()
@@ -28,10 +29,13 @@ class MainPage(QWidget):
 
 
         # Create a QHBoxLayout and add the button layout and label
+        rightLayout = QVBoxLayout()
+        rightLayout.addWidget(self.labelist)
+        rightLayout.addWidget(self.filelist)
         mainLayout = QHBoxLayout()
         mainLayout.addLayout(self.tools)
         mainLayout.addWidget(self.viewer)
-        mainLayout.addWidget(self.filelist)
+        mainLayout.addLayout(rightLayout)
         
         # Set the main layout of the window
         self.setLayout(mainLayout)
@@ -64,6 +68,12 @@ class MainPage(QWidget):
                 if file.endswith('.jpg') or file.endswith('.jpeg') or file.endswith('.png') or file.endswith('.bmp'):
                     item = QListWidgetItem(file)
                     item.setWhatsThis(os.path.join(folder, file))
+                    jsonfile = os.path.splitext(file)[0] + ".json"
+                    if os.path.isfile(os.path.join(folder, jsonfile)):
+                        item.setCheckState(Qt.Checked)
+                    else:
+                        item.setCheckState(Qt.Unchecked)
+                    # item.setCheckState(Qt.PartiallyChecked)
                     self.filelist.addItem(item)
     
     def handleKeyPressEvent(self, event):
