@@ -25,7 +25,7 @@ class MainPage(QWidget):
     def initUI(self):
 
         self.filelist.itemDoubleClicked.connect(self.openFile)
-
+        self.labelist.itemDoubleClicked.connect(self.pp)
         self.tools.button1.clicked.connect(self.openFileDialog)
         self.tools.button2.clicked.connect(self.openFolderDialog)
 
@@ -100,6 +100,8 @@ class MainPage(QWidget):
 
         # else:
         super().keyPressEvent(event)
+    def pp(self, item):
+        print(self.labelist.row(item))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

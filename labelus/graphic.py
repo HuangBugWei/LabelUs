@@ -67,8 +67,12 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self._labelList = labellist
         self._labelList.clear()
         for mask, _, classname  in self._labelObjects:
-            self._labelList.addItem(classname)
+            item = QtWidgets.QListWidgetItem(classname)
+            # item.setData(0, mask)
+            self._labelList.addItem(item)
 
+
+    
     def setLabelCls(self, labelcls):
         self._labelCls = labelcls
         # self._labelCls.clearList()
@@ -130,6 +134,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                 self._currentMask[self._currentMask > 0] = 0
         elif self._labelObjects:
             it = self._labelObjects.pop()
+            self._labelList.takeItem(len(self._labelObjects))
             self._scene.removeItem(it[0])
             del it
         
@@ -226,6 +231,9 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self._currentMask[self._currentMask > 0] = 0
         self._scene.addItem(mask)
         self._labelObjects.append([mask, hull, clsName])
+        
+        if self._labelList is not None:
+            self._labelList.addItem(clsName)
     
 
     def storeJson(self):
