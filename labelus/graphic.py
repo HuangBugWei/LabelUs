@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QPointF, QEvent
 from utils import *
-import cv2, os, json, base64
+import cv2, os, json
 import numpy as np
 
 # modified from https://stackoverflow.com/a/35514531
@@ -22,19 +22,22 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self._tempLabelObjects = []
         self._labelNow = False
         self._imgPath = None
+        self._folder = None
+        self._colorPlate = []
         
         self.setScene(self._scene)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0, 255, 0)))
-        self.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.setStyleSheet("background:transparent")
+        # self.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.setFrameShape(QtWidgets.QFrame.StyledPanel)
         shortcutUndo = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self)
         shortcutUndo.activated.connect(self.undo)
 
         shortcutStore = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+S"), self)
-        shortcutStore.activated.connect(self.store)
+        shortcutStore.activated.connect(self.storeJson)
 
     def hasPhoto(self):
         return not self._empty
@@ -59,6 +62,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             self._empty = False
             self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
             self._imgPath = os.path.basename(pixmap)
+            self._folder = os.path.dirname(pixmap)
             self._photo.setPixmap(QtGui.QPixmap(pixmap))
             self._cv2img = cv2.imread(pixmap)
             self._cv2mask = creatMask(self._cv2img)
@@ -72,7 +76,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         # clean _labelMask on it
         while self._labelObjects:
             it = self._labelObjects.pop()
-            self._scene.removeItem(it)
+            self._scene.removeItem(it[0])
             del it
         
         while self._tempLabelObjects:
@@ -88,7 +92,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                 factor = 1.25
                 self._zoom += 1
             else:
-                factor = 0.8
+                factor = 0.85
                 self._zoom -= 1
             if self._zoom > 0:
                 self.scale(factor, factor)
@@ -114,7 +118,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
-            print(self._cv2img.shape)
+
             self._labelNow = True
             floodFillInput = (self.mapToScene(event.pos()).toPoint().x(),
                               self.mapToScene(event.pos()).toPoint().y())
@@ -160,7 +164,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         
 
     def drawTempMask(self, mask):
-        arr = np.transpose(dilate(mask), (2, 0, 1))[0] > 0
+        arr = np.transpose(mask, (2, 0, 1))[0] > 0
         new_arr = np.zeros(arr.shape + (4,), dtype=np.uint8)
         # new_arr[arr] = np.array(QColor('red').getRgb()[:3] + (255,))
         new_arr[arr] = np.array((0, 255, 255, 200)) # bgra
@@ -175,42 +179,59 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         
         self._tempLabelObjects.append(mask)
     
-    def drawMask(self):
-        if self._tempLabelObjects:
-            hull = getContours(self._currentMask)
-            mask = QtWidgets.QGraphicsPolygonItem(QtGui.QPolygonF([QPoint(*p) for p in hull.reshape(-1, 2)]))
-            mask.setPen(QtGui.QPen(QtGui.QColor(255, 0, 0, 200), 5, QtCore.Qt.SolidLine))
-            mask.setBrush(QtGui.QBrush(QtGui.QColor(255, 0, 0, 100), QtCore.Qt.SolidPattern))
-            # mask.setSelected(True)
-            self._tempLabelObjects.clear()
-            self._tempMask.setPixmap(QtGui.QPixmap())
-            self._currentMask[self._currentMask > 0] = 0
-            self._scene.addItem(mask)
-            self._labelObjects.append([mask, hull])
+    def drawMask(self, hull=None):
+        if self._tempLabelObjects and not hull:
+            hull = getContours(self._currentMask).reshape(-1, 2).tolist()
+        
+        mask = QtWidgets.QGraphicsPolygonItem(QtGui.QPolygonF([QPoint(*p) for p in hull]))
+        mask.setPen(QtGui.QPen(QtGui.QColor(255, 0, 0, 200), 5, QtCore.Qt.SolidLine))
+        mask.setBrush(QtGui.QBrush(QtGui.QColor(255, 0, 0, 100), QtCore.Qt.SolidPattern))
+        # mask.setSelected(True)
+        self._tempLabelObjects.clear()
+        self._tempMask.setPixmap(QtGui.QPixmap())
+        self._currentMask[self._currentMask > 0] = 0
+        self._scene.addItem(mask)
+        self._labelObjects.append([mask, hull])
+    
 
-    def store(self):
+    def storeJson(self):
         print('store')
         # print(base64.b64decode(self._cv2img).decode('utf-8'))
         labeljson = dict()
         labeljson["imageHeight"] = self._cv2img.shape[0]
         labeljson["imageWidth"] = self._cv2img.shape[1]
-        labeljson["imagePath"] = None
-        labeljson["imageData"] = base64.b64decode(self._cv2img)
+        labeljson["imagePath"] = self._imgPath
+        labeljson["imageData"] = None
         labeljson["version"] = "5.0.1" # opt
         labeljson["flags"] = dict() # opt
         shapes = []
-        
+
         for shape in self._labelObjects:
             anno = dict()
             anno["label"] = "intersection"
-            anno["points"] = shape[1].reshape(-1,2).tolist()
+            anno["points"] = shape[1]
             anno["group_id"] = None
             anno["shape_type"] = "polygon"
             anno["flags"] = dict()
             shapes.append(anno)
         labeljson["shapes"] = shapes
-        with open(os.path.splitext(self._imgPath)[0]+'.json', 'w') as f:
-            json.dump(labeljson, f, indent=2)
+
+        jsonname = os.path.splitext(self._imgPath)[0]+'.json' 
+        with open(os.path.join(self._folder, jsonname), 'w') as f:
+            json.dump(labeljson, f, ensure_ascii=False, indent=2)
+    
+    def loadJson(self):
+        print("load")
+        path = os.path.join(self._folder,
+                            os.path.splitext(self._imgPath)[0]+'.json')
+        if os.path.isfile(path):
+            with open(path, "r") as f:
+                data = json.load(f)
+                for anno in data["shapes"]:
+                    hull = anno["points"]
+                    self.drawMask(hull)
+        else:
+            print("No json file")
     
     # def haveTempMask(self):
     #     return len(self._tempLabelObjects) != 0

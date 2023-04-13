@@ -48,7 +48,10 @@ class MainPage(QWidget):
     def openFile(self, item):
         print(item.whatsThis())
         fileName = item.whatsThis()
+        haveJson = item.checkState()
         self.viewer.setPhoto(fileName)
+        if haveJson:
+            self.viewer.loadJson()
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -57,6 +60,7 @@ class MainPage(QWidget):
         if fileName:
             # self.win.loadImage(fileName)
             self.viewer.setPhoto(fileName)
+            print(fileName)
     
     def openFolderDialog(self):
         options = QFileDialog.Options()
@@ -64,6 +68,7 @@ class MainPage(QWidget):
         folder = QFileDialog.getExistingDirectory(self, "Select Directory", "", options=options)
 
         if folder:
+            self.filelist.clear()
             for file in os.listdir(folder):
                 if file.endswith('.jpg') or file.endswith('.jpeg') or file.endswith('.png') or file.endswith('.bmp'):
                     item = QListWidgetItem(file)
