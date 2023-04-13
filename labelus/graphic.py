@@ -23,7 +23,14 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self._labelNow = False
         self._imgPath = None
         self._folder = None
-        self._colorPlate = []
+        self._colorPlate = [QtGui.QColor(255,0,0), 
+                            QtGui.QColor(0,255,0), 
+                            QtGui.QColor(0,0,255), 
+                            QtGui.QColor(255,255,0),
+                            QtGui.QColor(0,255,255),
+                            QtGui.QColor(255,0,255)]
+        self._labelList = None
+        self._labelCls = None
         
         self.setScene(self._scene)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
@@ -55,6 +62,17 @@ class PhotoViewer(QtWidgets.QGraphicsView):
                              viewrect.height() / scenerect.height())
                 self.scale(factor, factor)
             self._zoom = 0
+    
+    def setLabelList(self, labellist):
+        self._labelList = labellist
+        self._labelList.clear()
+        for mask, _, classname  in self._labelObjects:
+            self._labelList.addItem(classname)
+
+    def setLabelCls(self, labelcls):
+        self._labelCls = labelcls
+        # self._labelCls.clearList()
+        
 
     def setPhoto(self, pixmap=None):
         self._zoom = 0
@@ -179,19 +197,35 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         
         self._tempLabelObjects.append(mask)
     
-    def drawMask(self, hull=None):
+    def drawMask(self, hull=None, clsName=None, order=None):
         if self._tempLabelObjects and not hull:
             hull = getContours(self._currentMask).reshape(-1, 2).tolist()
+        if not hull:
+            return
+        if self._tempLabelObjects and not clsName:
+            clsName = self._labelCls.getCurrent()
+            if not clsName:
+                return
+        if self._tempLabelObjects and not order:
+            order = self._labelCls.getOrder(clsName)
+        
+
         
         mask = QtWidgets.QGraphicsPolygonItem(QtGui.QPolygonF([QPoint(*p) for p in hull]))
-        mask.setPen(QtGui.QPen(QtGui.QColor(255, 0, 0, 200), 5, QtCore.Qt.SolidLine))
-        mask.setBrush(QtGui.QBrush(QtGui.QColor(255, 0, 0, 100), QtCore.Qt.SolidPattern))
+        while (order >= len(self._colorPlate)):
+            color = tuple(np.random.randint(256, size=3))
+            self._colorPlate.append(QtGui.QColor(*color))
+        tempcolor = self._colorPlate[order]
+        tempcolor.setAlpha(200)
+        mask.setPen(QtGui.QPen(tempcolor, 5, QtCore.Qt.SolidLine))
+        tempcolor.setAlpha(100)
+        mask.setBrush(QtGui.QBrush(tempcolor, QtCore.Qt.SolidPattern))
         # mask.setSelected(True)
         self._tempLabelObjects.clear()
         self._tempMask.setPixmap(QtGui.QPixmap())
         self._currentMask[self._currentMask > 0] = 0
         self._scene.addItem(mask)
-        self._labelObjects.append([mask, hull])
+        self._labelObjects.append([mask, hull, clsName])
     
 
     def storeJson(self):
@@ -208,7 +242,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
 
         for shape in self._labelObjects:
             anno = dict()
-            anno["label"] = "intersection"
+            anno["label"] = shape[2]
             anno["points"] = shape[1]
             anno["group_id"] = None
             anno["shape_type"] = "polygon"
@@ -224,12 +258,16 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         print("load")
         path = os.path.join(self._folder,
                             os.path.splitext(self._imgPath)[0]+'.json')
+        
         if os.path.isfile(path):
             with open(path, "r") as f:
                 data = json.load(f)
                 for anno in data["shapes"]:
                     hull = anno["points"]
-                    self.drawMask(hull)
+                    clsName = anno["label"]
+                    self._labelCls.addItem(clsName)
+                    order = self._labelCls.getOrder(clsName)
+                    self.drawMask(hull, clsName, order)
         else:
             print("No json file")
     

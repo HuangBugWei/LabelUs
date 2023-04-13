@@ -7,6 +7,7 @@ from canvas import Canvas
 from filelist import FileList
 from tools import Tools
 from graphic import *
+from labelclass import *
 import numpy as np
 
 class MainPage(QWidget):
@@ -14,6 +15,7 @@ class MainPage(QWidget):
         super().__init__()
         self.labelist = FileList()
         self.filelist = FileList()
+        self.labelcls = MyWidget()
         self.tools = Tools()
         # self.canvas = Canvas()
         self.viewer = PhotoViewer(self)
@@ -30,6 +32,7 @@ class MainPage(QWidget):
 
         # Create a QHBoxLayout and add the button layout and label
         rightLayout = QVBoxLayout()
+        rightLayout.addWidget(self.labelcls)
         rightLayout.addWidget(self.labelist)
         rightLayout.addWidget(self.filelist)
         mainLayout = QHBoxLayout()
@@ -50,8 +53,10 @@ class MainPage(QWidget):
         fileName = item.whatsThis()
         haveJson = item.checkState()
         self.viewer.setPhoto(fileName)
+        self.viewer.setLabelCls(self.labelcls)
         if haveJson:
             self.viewer.loadJson()
+        self.viewer.setLabelList(self.labelist)
 
     def openFileDialog(self):
         options = QFileDialog.Options()
@@ -60,6 +65,10 @@ class MainPage(QWidget):
         if fileName:
             # self.win.loadImage(fileName)
             self.viewer.setPhoto(fileName)
+            self.viewer.setLabelCls(self.labelcls)
+            self.viewer.loadJson()
+            self.viewer.setLabelList(self.labelist)
+            
             print(fileName)
     
     def openFolderDialog(self):
