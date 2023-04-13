@@ -3,6 +3,14 @@ my customized label tool for my research
 
 ```python main.py``` to start the app.
 
+### Notice
+![image](https://user-images.githubusercontent.com/67520151/231901292-d254b7b4-d322-4b2b-91f4-93439d548c54.png)
+
+
+There's may have the area which is not closed (first image).
+Since algo behind is computing the convex hull of multiple area, thus we can select the most of the interested area (second image) to approximately achieve the result (third image).
+
+
 ### Mouse Function
 * Wheel for zoom-in / out image
 * Left-click and not released can drag the image
