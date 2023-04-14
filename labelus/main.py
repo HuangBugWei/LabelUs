@@ -28,6 +28,8 @@ class MainPage(QWidget):
         self.labelist.itemDoubleClicked.connect(self.pp)
         self.tools.button1.clicked.connect(self.openFileDialog)
         self.tools.button2.clicked.connect(self.openFolderDialog)
+        self.tools.button3.clicked.connect(self.save)
+        self.tools.button4.clicked.connect(self.undo)
 
 
         # Create a QHBoxLayout and add the button layout and label
@@ -39,7 +41,7 @@ class MainPage(QWidget):
         mainLayout.addLayout(self.tools)
         mainLayout.addWidget(self.viewer)
         mainLayout.addLayout(rightLayout)
-        
+        mainLayout.setContentsMargins(8,8,8,8)
         # Set the main layout of the window
         self.setLayout(mainLayout)
         self.setGeometry(100, 100, 1620, 880)
@@ -100,6 +102,14 @@ class MainPage(QWidget):
 
         # else:
         super().keyPressEvent(event)
+    
+    def save(self):
+        self.viewer.storeJson()
+    
+    def undo(self):
+        self.viewer.undo()
+
+    
     def pp(self, item):
         print(self.labelist.row(item))
 

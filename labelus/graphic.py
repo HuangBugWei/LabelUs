@@ -221,9 +221,9 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             color = tuple(np.random.randint(256, size=3))
             self._colorPlate.append(QtGui.QColor(*color))
         tempcolor = self._colorPlate[order]
-        tempcolor.setAlpha(200)
+        tempcolor.setAlpha(240)
         mask.setPen(QtGui.QPen(tempcolor, 5, QtCore.Qt.SolidLine))
-        tempcolor.setAlpha(100)
+        tempcolor.setAlpha(165)
         mask.setBrush(QtGui.QBrush(tempcolor, QtCore.Qt.SolidPattern))
         # mask.setSelected(True)
         self._tempLabelObjects.clear()
