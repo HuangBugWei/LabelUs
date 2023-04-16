@@ -3,6 +3,20 @@ my customized label tool for my research
 
 ```python main.py``` to start the app.
 
+### Top Dependencies
+```
+PyQt5==5.15.3, opencv-python==4.1.2.30, numpy==1.21.4, pycocotools==2.0.0.1
+```
+Note that the pycocotools installation process is a little bit complicated.
+I'll demonstrate the process for Windows OS
+
+```pip install pycocotools-windows```  
+or  
+Visit the https://pypi.tuna.tsinghua.edu.cn/simple/pycocotools-windows/ and install the appropriate wheel file.  
+Go to download file folder and pip install wheel file name.  
+
+I also had exported the requirements.txt which you can refer to.
+
 ### Notice
 ![image](https://user-images.githubusercontent.com/67520151/231901292-d254b7b4-d322-4b2b-91f4-93439d548c54.png)
 
