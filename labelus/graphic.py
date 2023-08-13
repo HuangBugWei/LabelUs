@@ -15,8 +15,10 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self._empty = True
         self._scene = QtWidgets.QGraphicsScene(self)
         self._photo = QtWidgets.QGraphicsPixmapItem()
+        self._realPhoto = QtWidgets.QGraphicsPixmapItem()
         self._tempMask = QtWidgets.QGraphicsPixmapItem()
         self._scene.addItem(self._photo)
+        self._scene.addItem(self._realPhoto)
         self._scene.addItem(self._tempMask)
         self._labelObjects = []
         self._tempLabelObjects = []
@@ -85,7 +87,11 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
             self._imgPath = os.path.basename(pixmap)
             self._folder = os.path.dirname(pixmap)
+            print(self._imgPath)
+            print(self._folder)
             self._photo.setPixmap(QtGui.QPixmap(pixmap))
+            self._realPhoto.setPixmap(QtGui.QPixmap(os.path.join(os.path.dirname(self._folder), "real", self._imgPath.replace("wire", "real"))))
+            # self._realPhoto.setPixmap()
             self._cv2img = cv2.imread(pixmap)
             self._cv2mask = creatMask(self._cv2img)
             self._currentMask = np.zeros_like(self._cv2img)
