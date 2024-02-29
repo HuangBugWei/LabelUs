@@ -8,7 +8,7 @@ matplotlib==3.7.1
 numpy==1.24.2
 opencv-python==4.7.0.72
 packaging==23.1
-Pillow==9.5.0
+Pillow==10.2.0
 pycocotools-windows @ file:///C:/Users/aicenter/Downloads/pycocotools_windows-2.0.0.1-cp38-cp38-win_amd64.whl
 pyparsing==3.0.9
 PyQt5==5.15.9
